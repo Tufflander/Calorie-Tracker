@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Calorie & Macro Tracker — MVP</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <style>
+    :root{
+      --bg: #0b1020; --card:#111733; --muted:#7f8ab3; --text:#eaf0ff; --acc:#7ac6ff; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
+    }
+    *{box-sizing:border-box}
+    body{margin:0; font-family:Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text)}
+    header{padding:20px 16px; border-bottom:1px solid #1e2755; position:sticky; top:0; background:linear-gradient(180deg, rgba(11,16,32,.95), rgba(11,16,32,.7)); backdrop-filter: blur(6px); z-index:2}
+    .wrap{max-width:1100px; margin:0 auto; padding:16px}
+    h1{margin:0 0 6px; font-size:22px}
+    .sub{color:var(--muted); font-size:13px}
+    .grid{display:grid; grid-template-columns: 1.1fr 1fr; gap:16px}
+    @media (max-width: 900px){.grid{grid-template-columns:1fr}}
+    .card{background:var(--card); border:1px solid #1e2755; border-radius:16px; padding:16px; box-shadow: 0 10px 30px rgba(0,0,0,.25)}
+    .card h2{margin:0 0 12px; font-size:16px}
+    label{display:block; font-size:12px; color:var(--muted); margin:10px 0 6px}
+    input, select{width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2a376d; background:#0e1530; color:var(--text)}
+    .row{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px}
+    .row3{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px}
+    .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid #2a376d; background:#0e1530; color:var(--text); cursor:pointer}
+    .btn.primary{background:linear-gradient(135deg, #2563eb, #06b6d4); border-color:transparent}
+    .btn.ghost{background:transparent}
+    .kpis{display:grid; grid-template-columns: repeat(3,1fr); gap:12px}
+    .kpi{background:#0f1736; border:1px solid #2a376d; border-radius:14px; padding:12px}
+    .kpi .v{font-size:18px; font-weight:700}
+    .kpi .t{color:var(--muted); font-size:12px}
+    table{width:100%; border-collapse:separate; border-spacing:0 8px}
+    th, td{font-size:12px; text-align:left; padding:10px 12px}
+    thead th{color:var(--muted)}
+    tbody tr{background:#0f1736; border:1px solid #223067}
+    tbody td:first-child{border-top-left-radius:10px; border-bottom-left-radius:10px}
+    tbody td:last-child{border-top-right-radius:10px; border-bottom-right-radius:10px}
+    .pill{display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px}
+    .pill.ok{background:rgba(34,197,94,.15); color:#4ade80}
+    .pill.warn{background:rgba(245,158,11,.15); color:#fbbf24}
+    .pill.bad{background:rgba(239,68,68,.15); color:#f87171}
+    footer{padding:28px 16px; color:var(--muted); font-size:12px}
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <header>
+    <div class="wrap">
+      <h1>Calorie & Macro Tracker — MVP</h1>
+      <div class="sub">Local-only demo. Data is saved to your browser. Click “AI Insights” to see how to connect OpenAI later.</div>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+      <!-- Left: Inputs and Table -->
+      <section class="card">
+        <h2>Add Daily Entry</h2>
+        <div class="row3">
+          <div>
+            <label>Date</label>
+            <input id="date" type="date"/>
+          </div>
+          <div>
+            <label>Body weight (kg)</label>
+            <input id="weight" type="number" step="0.1" placeholder="e.g. 78.4"/>
+          </div>
+          <div>
+            <label>Goal weight (kg)</label>
+            <input id="goal" type="number" step="0.1" placeholder="e.g. 74"/>
+          </div>
+        </div>
+        <div class="row">
+          <div>
+            <label>Calories (kcal)</label>
+            <input id="kcal" type="number" step="1" placeholder="e.g. 2200"/>
+          </div>
+          <div>
+            <label>Protein (g)</label>
+            <input id="protein" type="number" step="1" placeholder="e.g. 165"/>
+          </div>
+          <div>
+            <label>Carbs (g)</label>
+            <input id="carbs" type="number" step="1" placeholder="e.g. 210"/>
+          </div>
+          <div>
+            <label>Fat (g)</label>
+            <input id="fat" type="number" step="1" placeholder="e.g. 60"/>
+          </div>
+        </div>
+        <div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap">
+          <button class="btn primary" onclick="addEntry()">Save entry</button>
+          <button class="btn" onclick="seedDemo()">Load demo data</button>
+          <button class="btn ghost" onclick="clearAll()">Clear all</button>
+          <button class="btn" onclick="getAIInsights()">AI Insights</button>
+        </div>
+
+        <div style="margin-top:18px">
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Weight</th>
+                <th>kcal</th>
+                <th>P</th>
+                <th>C</th>
+                <th>F</th>
+                <th>Est. balance</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Right: KPIs and Charts -->
+      <section class="card">
+        <h2>Dashboard</h2>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="t">7‑day avg kcal</div>
+            <div class="v" id="kpiKcal">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Weight trend (7d)</div>
+            <div class="v" id="kpiWt">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">On track</div>
+            <div class="v" id="kpiTrack">—</div>
+          </div>
+        </div>
+        <div style="margin-top:14px">
+          <canvas id="chartWeight" height="180"></canvas>
+        </div>
+        <div style="margin-top:14px">
+          <canvas id="chartKcal" height="180"></canvas>
+        </div>
+      </section>
+    </div>
+
+    <section class="card" style="margin-top:16px">
+      <h2>How the AI will plug in (read me)</h2>
+      <ol class="muted">
+        <li>Create a free account on Vercel or Netlify. Deploy this file as a static site.</li>
+        <li>Add a serverless function at <code>/api/insights</code> that calls OpenAI with your data points to generate coaching tips.</li>
+        <li>Store data long‑term in a free tier database such as Supabase. Replace <code>localStorage</code> with API calls.</li>
+      </ol>
+      <p class="muted">Below, the “AI Insights” button tries to call <code>/api/insights</code>. If that route does not exist yet, you will see a friendly message.</p>
+      <details>
+        <summary>Example Node serverless function (Vercel/Netlify) — pseudo‑code</summary>
+        <pre style="white-space:pre-wrap; font-size:12px; color:#cbd5e1">
+// file: api/insights.js
+export default async function handler(req, res){
+  const { entries } = await req.json(); // [{date, weight, kcal, protein, carbs, fat, goal}]
+  const sys = `You are a nutrition coach. Use Australian English.`;
+  const user = `Analyse the weight trend and calories vs goal. Identify adherence, suggest macro tweaks and weekly targets. Data: ${JSON.stringify(entries).slice(0,5000)}`;
+  const r = await fetch('https://api.openai.com/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':`Bearer ${process.env.OPENAI_API_KEY}`},
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [{role:'system', content: sys},{role:'user', content:user}],
+      temperature: 0.3
+    })
+  });
+  const data = await r.json();
+  res.status(200).json({ advice: data.choices?.[0]?.message?.content || 'No advice' });
+}
+        </pre>
+      </details>
+    </section>
+  </main>
+
+  <footer class="wrap">MVP for learning. Not medical advice.</footer>
+
+  <script>
+    const $ = (id)=>document.getElementById(id);
+    const LS_KEY = 'cal_mvp_entries_v1';
+
+    function load(){
+      const raw = localStorage.getItem(LS_KEY);
+      try{ return raw? JSON.parse(raw): []; }catch(e){ return []; }
+    }
+    function save(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); render(); }
+
+    function addEntry(){
+      const date = $('date').value || new Date().toISOString().slice(0,10);
+      const weight = parseFloat($('weight').value||'');
+      const goal = parseFloat($('goal').value||'');
+      const kcal = parseFloat($('kcal').value||'');
+      const protein = parseFloat($('protein').value||'');
+      const carbs = parseFloat($('carbs').value||'');
+      const fat = parseFloat($('fat').value||'');
+      if(isNaN(weight)||isNaN(kcal)){
+        alert('Please enter at least weight and calories');
+        return;
+      }
+      const list = load();
+      const id = date+':'+(Math.random()+"").slice(2,7);
+      list.push({id, date, weight, goal: isNaN(goal)? null: goal, kcal, protein: protein||0, carbs: carbs||0, fat: fat||0});
+      list.sort((a,b)=> a.date.localeCompare(b.date));
+      save(list);
+      ['weight','goal','kcal','protein','carbs','fat'].forEach(k=>{ $(k).value=''; });
+    }
+
+    function removeEntry(id){
+      const list = load().filter(x=>x.id!==id);
+      save(list);
+    }
+
+    function clearAll(){ if(confirm('Delete all local data?')){ localStorage.removeItem(LS_KEY); render(); } }
+
+    function kcalBalance(kcal, target){ if(!target) return null; return Math.round(kcal - target); }
+
+    function movingAvg(arr, window){
+      const out=[]; for(let i=0;i<arr.length;i++){ const s=Math.max(0,i-window+1); const slice=arr.slice(s,i+1); out.push(slice.reduce((a,b)=>a+b,0)/slice.length); } return out;
+    }
+
+    function weightTrendKgPerWeek(points){
+      if(points.length<2) return 0;
+      // simple linear regression over days -> kg, then scale to per week
+      const xs = points.map((p,i)=> i); const ys = points.map(p=>p);
+      const n = xs.length; const sx=xs.reduce((a,b)=>a+b,0); const sy=ys.reduce((a,b)=>a+b,0);
+      const sxy=xs.reduce((a,x,i)=>a+x*ys[i],0); const sxx=xs.reduce((a,x)=>a+x*x,0);
+      const slope = (n*sxy - sx*sy)/(n*sxx - sx*sx || 1);
+      return slope*7; // kg per 7 days
+    }
+
+    let chartW=null, chartK=null;
+    function render(){
+      const list = load();
+      const tbody = $('rows');
+      tbody.innerHTML='';
+      const TDEE_TARGET = 2200; // temp target; later calculate from goal rate & stats
+      const labels = list.map(x=>x.date);
+      const weights = list.map(x=>x.weight);
+      const kcals = list.map(x=>x.kcal);
+
+      // table
+      for(const row of list){
+        const tr = document.createElement('tr');
+        const bal = kcalBalance(row.kcal, TDEE_TARGET);
+        const pill = bal==null? '': `<span class="pill ${bal< -300? 'ok': bal<200? 'warn':'bad'}">${bal>0?'+':''}${bal||0}</span>`;
+        tr.innerHTML = `
+          <td>${row.date}</td>
+          <td>${row.weight?.toFixed(1)||''}</td>
+          <td>${row.kcal||''}</td>
+          <td>${row.protein||''}</td>
+          <td>${row.carbs||''}</td>
+          <td>${row.fat||''}</td>
+          <td>${pill}</td>
+          <td><button class="btn" onclick="removeEntry('${row.id}')">Delete</button></td>`;
+        tbody.appendChild(tr);
+      }
+
+      // KPIs
+      const last7 = kcals.slice(-7);
+      const avg7 = last7.length? Math.round(last7.reduce((a,b)=>a+b,0)/last7.length): null;
+      $('kpiKcal').textContent = avg7? avg7+' kcal': '—';
+
+      const wtTrend = weightTrendKgPerWeek(weights.filter(x=>!isNaN(x)));
+      $('kpiWt').textContent = (wtTrend>0? '+':'') + wtTrend.toFixed(2) + ' kg/wk';
+
+      // simple on-track logic: losing between 0.25 and 1.0 kg/week
+      const onTrack = wtTrend < -0.25 && wtTrend > -1.0;
+      $('kpiTrack').innerHTML = onTrack? '<span class="pill ok">Yes</span>': '<span class="pill warn">Needs review</span>';
+
+      // charts
+      const ctxW = $('chartWeight').getContext('2d');
+      const ctxK = $('chartKcal').getContext('2d');
+      chartW && chartW.destroy();
+      chartK && chartK.destroy();
+      chartW = new Chart(ctxW, {
+        type:'line',
+        data:{ labels, datasets:[{ label:'Weight (kg)', data: weights, tension:.3, fill:false }]},
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{ ticks:{ color:'#9aa6d1'}}, y:{ ticks:{ color:'#9aa6d1'}}}}
+      });
+      chartK = new Chart(ctxK, {
+        type:'bar',
+        data:{ labels, datasets:[{ label:'Calories', data: kcals }]},
+        options:{ plugins:{legend:{display:false}}, scales:{ x:{ ticks:{ color:'#9aa6d1'}}, y:{ ticks:{ color:'#9aa6d1'}}}}
+      });
+    }
+
+    async function getAIInsights(){
+      const entries = load();
+      try{
+        const r = await fetch('/api/insights', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ entries })});
+        if(!r.ok) throw new Error('No API route yet');
+        const data = await r.json();
+        alert(data.advice || 'No advice');
+      }catch(e){
+        alert('To enable AI: deploy a serverless function at /api/insights that calls OpenAI. See the How‑to section below.');
+      }
+    }
+
+    function seedDemo(){
+      const today = new Date();
+      const list=[]; let w=78.6; let kcal=2300;
+      for(let i=13;i>=0;i--){
+        const d = new Date(today); d.setDate(today.getDate()-i);
+        w += (Math.random()-.55)*0.25; // slight down trend
+        kcal += (Math.random()-.4)*150;
+        list.push({
+          id: d.toISOString()+Math.random(),
+          date: d.toISOString().slice(0,10),
+          weight: Math.round(w*10)/10,
+          goal: 74,
+          kcal: Math.round(kcal),
+          protein: 160 + Math.round(Math.random()*20),
+          carbs: 180 + Math.round(Math.random()*40),
+          fat: 60 + Math.round(Math.random()*10)
+        });
+      }
+      localStorage.setItem(LS_KEY, JSON.stringify(list));
+      render();
+    }
+
+    // init
+    (function(){
+      const d = new Date().toISOString().slice(0,10);
+      $('date').value = d;
+      render();
+    })();
+  </script>
+</body>
+</html>
