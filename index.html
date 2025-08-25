@@ -26,6 +26,7 @@
     input, select{width:100%; padding:10px 12px; border-radius:10px; border:1px solid #2a376d; background:#0e1530; color:var(--text)}
     .row{display:grid; grid-template-columns: repeat(4, 1fr); gap:10px}
     .row3{display:grid; grid-template-columns: repeat(3, 1fr); gap:10px}
+    .row2{display:grid; grid-template-columns: repeat(2, 1fr); gap:10px}
     .btn{display:inline-flex; align-items:center; gap:8px; padding:10px 14px; border-radius:12px; border:1px solid #2a376d; background:#0e1530; color:var(--text); cursor:pointer}
     .btn.primary{background:linear-gradient(135deg, #2563eb, #06b6d4); border-color:transparent}
     .btn.ghost{background:transparent}
@@ -45,17 +46,37 @@
     .pill.bad{background:rgba(239,68,68,.15); color:#f87171}
     footer{padding:28px 16px; color:var(--muted); font-size:12px}
     .muted{color:var(--muted)}
+
+    /* Onboarding modal */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(4,6,14,.65); backdrop-filter: blur(8px); z-index:30}
+    .modal.active{display:flex}
+    .panel{width:min(820px, 92vw); background:#0f1736; border:1px solid #2a376d; border-radius:18px; padding:16px}
+    .panel h3{margin:0 0 10px; font-size:18px}
+    .hint{font-size:12px; color:var(--muted)}
+    .danger{color:#f87171; font-size:12px}
   </style>
 </head>
 <body>
   <header>
     <div class="wrap">
       <h1>Calorie & Macro Tracker — MVP</h1>
-      <div class="sub">Local-only demo. Data is saved to your browser. Click “AI Insights” to see how to connect OpenAI later.</div>
+      <div class="sub">Local-only demo. Data is saved to your browser. Add a plan with Setup, then log your days.</div>
     </div>
   </header>
 
   <main class="wrap">
+    <section class="card" id="setupBanner" style="display:none; margin-bottom:16px">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap">
+        <div>
+          <strong>No plan yet.</strong>
+          <span class="muted">Run the 2‑minute setup to get targets and an 8‑week plan.</span>
+        </div>
+        <div>
+          <button class="btn primary" onclick="openSetup()">Start setup</button>
+        </div>
+      </div>
+    </section>
+
     <div class="grid">
       <!-- Left: Inputs and Table -->
       <section class="card">
@@ -96,6 +117,7 @@
           <button class="btn primary" onclick="addEntry()">Save entry</button>
           <button class="btn" onclick="seedDemo()">Load demo data</button>
           <button class="btn ghost" onclick="clearAll()">Clear all</button>
+          <button class="btn" onclick="openSetup()">Re‑run setup</button>
           <button class="btn" onclick="getAIInsights()">AI Insights</button>
         </div>
 
@@ -135,6 +157,20 @@
             <div class="v" id="kpiTrack">—</div>
           </div>
         </div>
+        <div class="kpis" style="margin-top:12px">
+          <div class="kpi">
+            <div class="t">Daily kcal target</div>
+            <div class="v" id="kpiTargetKcal">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Protein target</div>
+            <div class="v" id="kpiTargetP">—</div>
+          </div>
+          <div class="kpi">
+            <div class="t">Carb/Fat split</div>
+            <div class="v" id="kpiTargetCF">—</div>
+          </div>
+        </div>
         <div style="margin-top:14px">
           <canvas id="chartWeight" height="180"></canvas>
         </div>
@@ -147,47 +183,173 @@
     <section class="card" style="margin-top:16px">
       <h2>How the AI will plug in (read me)</h2>
       <ol class="muted">
-        <li>Create a free account on Vercel or Netlify. Deploy this file as a static site.</li>
-        <li>Add a serverless function at <code>/api/insights</code> that calls OpenAI with your data points to generate coaching tips.</li>
-        <li>Store data long‑term in a free tier database such as Supabase. Replace <code>localStorage</code> with API calls.</li>
+        <li>Deploys as a static site on Vercel. No account needed for the MVP.</li>
+        <li>Add a serverless function at <code>/api/insights</code> to call OpenAI later (when you add your API key).</li>
+        <li>For multi‑device sync, swap localStorage for Supabase (free tier).</li>
       </ol>
-      <p class="muted">Below, the “AI Insights” button tries to call <code>/api/insights</code>. If that route does not exist yet, you will see a friendly message.</p>
-      <details>
-        <summary>Example Node serverless function (Vercel/Netlify) — pseudo‑code</summary>
-        <pre style="white-space:pre-wrap; font-size:12px; color:#cbd5e1">
-// file: api/insights.js
-export default async function handler(req, res){
-  const { entries } = await req.json(); // [{date, weight, kcal, protein, carbs, fat, goal}]
-  const sys = `You are a nutrition coach. Use Australian English.`;
-  const user = `Analyse the weight trend and calories vs goal. Identify adherence, suggest macro tweaks and weekly targets. Data: ${JSON.stringify(entries).slice(0,5000)}`;
-  const r = await fetch('https://api.openai.com/v1/chat/completions',{
-    method:'POST',
-    headers:{'Content-Type':'application/json','Authorization':`Bearer ${process.env.OPENAI_API_KEY}`},
-    body: JSON.stringify({
-      model: 'gpt-4o-mini',
-      messages: [{role:'system', content: sys},{role:'user', content:user}],
-      temperature: 0.3
-    })
-  });
-  const data = await r.json();
-  res.status(200).json({ advice: data.choices?.[0]?.message?.content || 'No advice' });
-}
-        </pre>
-      </details>
+      <p class="muted">“AI Insights” will show a friendly message until <code>/api/insights</code> exists.</p>
     </section>
   </main>
+
+  <!-- Onboarding modal -->
+  <div class="modal" id="setupModal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <h3>Quick setup</h3>
+      <p class="hint">This builds an 8‑week plan with safe limits. You can edit later.</p>
+      <div class="row2">
+        <div>
+          <label>Sex</label>
+          <select id="s_sex"><option value="male">Male</option><option value="female">Female</option><option value="na">Prefer not to say</option></select>
+        </div>
+        <div>
+          <label>Age</label>
+          <input id="s_age" type="number" min="10" max="100" placeholder="e.g. 30" />
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Height (cm)</label>
+          <input id="s_height" type="number" step="1" placeholder="e.g. 178" />
+        </div>
+        <div>
+          <label>Current weight (kg)</label>
+          <input id="s_weight" type="number" step="0.1" placeholder="e.g. 78.5" />
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Goal</label>
+          <select id="s_goalType">
+            <option value="lose">Lose fat (deficit)</option>
+            <option value="maintain">Maintain</option>
+            <option value="gain">Gain muscle (surplus)</option>
+          </select>
+        </div>
+        <div>
+          <label>Goal weight (kg)</label>
+          <input id="s_goalWeight" type="number" step="0.1" placeholder="optional" />
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Timeframe (weeks)</label>
+          <input id="s_weeks" type="number" min="4" max="52" value="8" />
+        </div>
+        <div>
+          <label>Activity level</label>
+          <select id="s_activity">
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Lightly active</option>
+            <option value="1.55">Moderately active</option>
+            <option value="1.725">Very active</option>
+          </select>
+        </div>
+      </div>
+      <div class="row2">
+        <div>
+          <label>Protein target (g/kg)</label>
+          <input id="s_proteinKg" type="number" step="0.1" value="1.8" />
+        </div>
+        <div>
+          <label>Min dietary fat (g/kg)</label>
+          <input id="s_fatMinKg" type="number" step="0.1" value="0.6" />
+        </div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+        <button class="btn primary" onclick="saveSetup()">Save plan</button>
+        <button class="btn" onclick="closeSetup()">Cancel</button>
+        <div class="hint" id="s_msg"></div>
+      </div>
+    </div>
+  </div>
 
   <footer class="wrap">MVP for learning. Not medical advice.</footer>
 
   <script>
     const $ = (id)=>document.getElementById(id);
     const LS_KEY = 'cal_mvp_entries_v1';
+    const PROFILE_KEY = 'cal_profile_v1';
+    const TARGETS_KEY = 'cal_targets_v1';
 
     function load(){
-      const raw = localStorage.getItem(LS_KEY);
-      try{ return raw? JSON.parse(raw): []; }catch(e){ return []; }
+      try{ return JSON.parse(localStorage.getItem(LS_KEY)||'[]'); }catch(e){ return []; }
     }
     function save(list){ localStorage.setItem(LS_KEY, JSON.stringify(list)); render(); }
+
+    function loadProfile(){ try{ return JSON.parse(localStorage.getItem(PROFILE_KEY)||'null'); }catch(e){ return null; } }
+    function loadTargets(){ try{ return JSON.parse(localStorage.getItem(TARGETS_KEY)||'null'); }catch(e){ return null; } }
+
+    function saveProfile(p){ localStorage.setItem(PROFILE_KEY, JSON.stringify(p)); }
+    function saveTargets(t){ localStorage.setItem(TARGETS_KEY, JSON.stringify(t)); }
+
+    function openSetup(){ $('setupModal').classList.add('active'); $('s_msg').textContent=''; }
+    function closeSetup(){ $('setupModal').classList.remove('active'); render(); }
+
+    function mifflin(heightCm, weightKg, age, sex){
+      const s = sex==='male'? 5: sex==='female'? -161: -78; // if unknown, average the constant
+      return 10*weightKg + 6.25*heightCm - 5*age + s;
+    }
+
+    function computeTargets(p){
+      // Estimate maintenance and safe targets
+      const BMR = mifflin(p.heightCm, p.weightKg, p.age, p.sex);
+      const TDEE = BMR * p.activity;
+
+      const weeks = Math.max(4, Math.min(52, p.weeks||8));
+      let dailyKcal = TDEE; // default maintain
+
+      const kgDiff = (p.goalWeightKg? p.goalWeightKg - p.weightKg : 0);
+      const weeklyChangeNeeded = kgDiff / weeks; // negative if losing
+      const kcalPerKg = 7700; // rough estimate
+
+      if(p.goalType==='lose'){
+        // safe weekly loss ~0.25% to 1.0% of BW; cap daily deficit at min(1000, 0.25*TDEE)
+        const bw = p.weightKg;
+        const safeMaxPerWeek = -Math.max(0.25*bw/100 * 100, 0.25*bw/100 * 100) // placeholder not used further
+        const desiredPerWeek = Math.min(-0.0025*bw, Math.max(weeklyChangeNeeded, -0.01*bw)); // clamp
+        let dailyDeficit = Math.abs(desiredPerWeek) * kcalPerKg / 7;
+        const cap = Math.min(1000, 0.25*TDEE);
+        dailyDeficit = Math.min(dailyDeficit, cap);
+        dailyKcal = Math.max(1200, Math.round(TDEE - dailyDeficit));
+      }
+      if(p.goalType==='gain'){
+        // modest surplus 200‑400 kcal/day
+        const surplus = 300;
+        dailyKcal = Math.round(TDEE + surplus);
+      }
+
+      // macros
+      const proteinG = Math.round(p.proteinPerKg * p.weightKg);
+      const fatMinG = Math.round(p.fatMinPerKg * p.weightKg);
+      const kcalAfterP = dailyKcal - proteinG*4;
+      const fatG = Math.max(fatMinG, Math.round(0.25*dailyKcal/9));
+      const carbsG = Math.max(0, Math.round((dailyKcal - proteinG*4 - fatG*9)/4));
+
+      return { TDEE: Math.round(TDEE), dailyKcal, proteinG, fatG, carbsG };
+    }
+
+    function saveSetup(){
+      const p = {
+        sex: $('s_sex').value,
+        age: parseInt($('s_age').value||'0',10),
+        heightCm: parseFloat($('s_height').value||'0'),
+        weightKg: parseFloat($('s_weight').value||'0'),
+        goalType: $('s_goalType').value,
+        goalWeightKg: parseFloat($('s_goalWeight').value||'') || null,
+        weeks: parseInt($('s_weeks').value||'8',10),
+        activity: parseFloat($('s_activity').value||'1.2'),
+        proteinPerKg: parseFloat($('s_proteinKg').value||'1.8'),
+        fatMinPerKg: parseFloat($('s_fatMinKg').value||'0.6')
+      };
+
+      if(!p.age || !p.heightCm || !p.weightKg){ $('s_msg').textContent = 'Please fill age, height and current weight.'; return; }
+
+      const t = computeTargets(p);
+      saveProfile(p); saveTargets(t);
+      $('s_msg').textContent = 'Saved. Closing…';
+      setTimeout(()=>{ closeSetup(); }, 400);
+    }
 
     function addEntry(){
       const date = $('date').value || new Date().toISOString().slice(0,10);
@@ -209,10 +371,7 @@ export default async function handler(req, res){
       ['weight','goal','kcal','protein','carbs','fat'].forEach(k=>{ $(k).value=''; });
     }
 
-    function removeEntry(id){
-      const list = load().filter(x=>x.id!==id);
-      save(list);
-    }
+    function removeEntry(id){ save(load().filter(x=>x.id!==id)); }
 
     function clearAll(){ if(confirm('Delete all local data?')){ localStorage.removeItem(LS_KEY); render(); } }
 
@@ -223,26 +382,30 @@ export default async function handler(req, res){
     }
 
     function weightTrendKgPerWeek(points){
-      if(points.length<2) return 0;
-      // simple linear regression over days -> kg, then scale to per week
-      const xs = points.map((p,i)=> i); const ys = points.map(p=>p);
+      const ys = points.filter(x=>!isNaN(x));
+      if(ys.length<2) return 0;
+      const xs = ys.map((_,i)=> i);
       const n = xs.length; const sx=xs.reduce((a,b)=>a+b,0); const sy=ys.reduce((a,b)=>a+b,0);
       const sxy=xs.reduce((a,x,i)=>a+x*ys[i],0); const sxx=xs.reduce((a,x)=>a+x*x,0);
       const slope = (n*sxy - sx*sy)/(n*sxx - sx*sx || 1);
-      return slope*7; // kg per 7 days
+      return slope*7; // kg per week
     }
 
     let chartW=null, chartK=null;
     function render(){
       const list = load();
+      const prof = loadProfile();
+      const targ = loadTargets();
+
+      $('setupBanner').style.display = prof? 'none':'block';
+
       const tbody = $('rows');
       tbody.innerHTML='';
-      const TDEE_TARGET = 2200; // temp target; later calculate from goal rate & stats
+      const TDEE_TARGET = targ?.dailyKcal || 2200; // temp fallback
       const labels = list.map(x=>x.date);
       const weights = list.map(x=>x.weight);
       const kcals = list.map(x=>x.kcal);
 
-      // table
       for(const row of list){
         const tr = document.createElement('tr');
         const bal = kcalBalance(row.kcal, TDEE_TARGET);
@@ -264,12 +427,15 @@ export default async function handler(req, res){
       const avg7 = last7.length? Math.round(last7.reduce((a,b)=>a+b,0)/last7.length): null;
       $('kpiKcal').textContent = avg7? avg7+' kcal': '—';
 
-      const wtTrend = weightTrendKgPerWeek(weights.filter(x=>!isNaN(x)));
+      const wtTrend = weightTrendKgPerWeek(weights);
       $('kpiWt').textContent = (wtTrend>0? '+':'') + wtTrend.toFixed(2) + ' kg/wk';
 
-      // simple on-track logic: losing between 0.25 and 1.0 kg/week
-      const onTrack = wtTrend < -0.25 && wtTrend > -1.0;
+      const onTrack = wtTrend < -0.25 && wtTrend > -1.0; // rough band
       $('kpiTrack').innerHTML = onTrack? '<span class="pill ok">Yes</span>': '<span class="pill warn">Needs review</span>';
+
+      $('kpiTargetKcal').textContent = targ? targ.dailyKcal + ' kcal' : '—';
+      $('kpiTargetP').textContent = targ? targ.proteinG + ' g' : '—';
+      $('kpiTargetCF').textContent = targ? `${targ.carbsG} C / ${targ.fatG} F` : '—';
 
       // charts
       const ctxW = $('chartWeight').getContext('2d');
@@ -296,7 +462,7 @@ export default async function handler(req, res){
         const data = await r.json();
         alert(data.advice || 'No advice');
       }catch(e){
-        alert('To enable AI: deploy a serverless function at /api/insights that calls OpenAI. See the How‑to section below.');
+        alert('To enable AI: add /api/insights and OPENAI_API_KEY in Vercel later.');
       }
     }
 
@@ -327,6 +493,7 @@ export default async function handler(req, res){
       const d = new Date().toISOString().slice(0,10);
       $('date').value = d;
       render();
+      if(!loadProfile()) openSetup();
     })();
   </script>
 </body>
