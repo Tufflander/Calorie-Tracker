@@ -9,53 +9,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
-    /* === Glass White Theme === */
-.theme-glass {
-  --bg: #f7f8fb;
-  --card: rgba(255,255,255,0.65);
-  --text: #0b1220;
-  --muted: #6b7280;
-  --acc: #0ea5e9;
-}
-.theme-glass body { background: radial-gradient(1200px 800px at 20% -10%, #ffffff 0%, #eef2f7 50%, #e9eef6 100%); }
-.theme-glass header { 
-  background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
-  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
-  backdrop-filter: saturate(140%) blur(10px);
-}
-.theme-glass .card, 
-.theme-glass .kpi {
-  background: var(--card);
-  border: 1px solid rgba(15,23,42,0.08);
-  border-radius: 24px;
-  box-shadow: 0 10px 30px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
-  backdrop-filter: blur(12px);
-}
-.theme-glass input, 
-.theme-glass select {
-  background: rgba(255,255,255,0.9);
-  border: 1px solid rgba(15,23,42,0.12);
-  border-radius: 16px;
-}
-.theme-glass .btn {
-  border-radius: 16px;
-  border: 1px solid rgba(15,23,42,0.12);
-  background: rgba(255,255,255,0.8);
-}
-.theme-glass .btn.primary {
-  background: linear-gradient(135deg, #60a5fa, #22d3ee);
-  border-color: transparent;
-  box-shadow: 0 8px 18px rgba(59,130,246,0.25);
-}
-.theme-glass table tbody tr {
-  background: rgba(255,255,255,0.7);
-  border: 1px solid rgba(15,23,42,0.08);
-}
-.theme-glass .pill.ok  { background: rgba(16,185,129,0.15); color:#059669; }
-.theme-glass .pill.warn{ background: rgba(245,158,11,0.15); color:#b45309; }
-.theme-glass .pill.bad { background: rgba(239,68,68,0.15); color:#b91c1c; }
-/* Chart tick colour adjustments on light background */
-.theme-glass canvas { background: transparent; }
     :root{
       --bg: #0b1020; --card:#111733; --muted:#7f8ab3; --text:#eaf0ff; --acc:#7ac6ff; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
     }
@@ -101,14 +54,30 @@
     .panel h3{margin:0 0 10px; font-size:18px}
     .hint{font-size:12px; color:var(--muted)}
     .danger{color:#f87171; font-size:12px}
-    /* Subtle hover lift for cards and buttons */
-.theme-glass .card:hover { transform: translateY(-2px); transition: transform 180ms ease; }
-.theme-glass .btn:hover  { transform: translateY(-1px); transition: transform 150ms ease; }
+    /* === Setup modal enhancements === */
+    .modal{position:fixed; inset:0; display:none; align-items:center; justify-content:center; background:rgba(15,23,42,.35); backdrop-filter: blur(10px); z-index:30}
+    .modal.active{display:flex}
+    .panel{width:min(980px, 96vw); background:#0f1736; border:1px solid #2a376d; border-radius:24px; padding:18px}
+    .panel h3{margin:0 0 6px; font-size:20px}
+    .hint{font-size:12px; color:var(--muted)}
+    .danger{color:#b91c1c; font-size:12px}
+    .ok{color:#047857; font-size:12px}
+    .setup-grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:14px}
+    @media (max-width: 900px){ .setup-grid{grid-template-columns:1fr}}
+    .preview{background:rgba(255,255,255,.04); border:1px solid rgba(255,255,255,.09); border-radius:16px; padding:12px}
+    .pv-title{font-size:13px; color:var(--muted); margin-bottom:6px}
+    .pv-row{display:grid; grid-template-columns: 1fr auto; gap:8px; padding:6px 0; font-size:14px}
+    .pv-row + .pv-row{border-top:1px dashed rgba(255,255,255,.08)}
+    .bar{height:8px; background:rgba(255,255,255,.12); border-radius:999px; overflow:hidden}
+    .bar > i{display:block; height:100%; width:0; background:linear-gradient(90deg, #60a5fa, #22d3ee)}
 
+    /* Glass theme overrides */
+    .theme-glass .modal{background:rgba(241,245,249,.5)}
+    .theme-glass .panel{background:rgba(255,255,255,.7); border:1px solid rgba(15,23,42,.08); backdrop-filter: blur(16px);}
+    .theme-glass .preview{background:rgba(255,255,255,.55); border:1px solid rgba(15,23,42,.08)}
   </style>
 </head>
 <body>
-  <body class="theme-glass">
   <header>
     <div class="wrap">
       <h1>Calorie & Macro Tracker — MVP</h1>
@@ -247,76 +216,101 @@
   <div class="modal" id="setupModal" role="dialog" aria-modal="true">
     <div class="panel">
       <h3>Quick setup</h3>
-      <p class="hint">This builds an 8‑week plan with safe limits. You can edit later.</p>
-      <div class="row2">
+      <p class="hint">Answer a few basics. We’ll calculate safe targets and an 8‑week plan preview.</p>
+      <div class="setup-grid">
+        <!-- Left: form -->
         <div>
-          <label>Sex</label>
-          <select id="s_sex"><option value="male">Male</option><option value="female">Female</option><option value="na">Prefer not to say</option></select>
-        </div>
-        <div>
-          <label>Age</label>
-          <input id="s_age" type="number" min="10" max="100" placeholder="e.g. 30" />
-        </div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Height (cm)</label>
-          <input id="s_height" type="number" step="1" placeholder="e.g. 178" />
-        </div>
-        <div>
-          <label>Current weight (kg)</label>
-          <input id="s_weight" type="number" step="0.1" placeholder="e.g. 78.5" />
-        </div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Goal</label>
-          <select id="s_goalType">
-            <option value="lose">Lose fat (deficit)</option>
-            <option value="maintain">Maintain</option>
-            <option value="gain">Gain muscle (surplus)</option>
-          </select>
-        </div>
-        <div>
-          <label>Goal weight (kg)</label>
-          <input id="s_goalWeight" type="number" step="0.1" placeholder="optional" />
-        </div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Timeframe (weeks)</label>
-          <input id="s_weeks" type="number" min="4" max="52" value="8" />
-        </div>
-        <div>
-          <label>Activity level</label>
-          <select id="s_activity">
-            <option value="1.2">Sedentary</option>
-            <option value="1.375">Lightly active</option>
-            <option value="1.55">Moderately active</option>
-            <option value="1.725">Very active</option>
-          </select>
-        </div>
-      </div>
-      <div class="row2">
-        <div>
-          <label>Protein target (g/kg)</label>
-          <input id="s_proteinKg" type="number" step="0.1" value="1.8" />
-        </div>
-        <div>
-          <label>Min dietary fat (g/kg)</label>
-          <input id="s_fatMinKg" type="number" step="0.1" value="0.6" />
-        </div>
-      </div>
+          <div class="row2">
+            <div>
+              <label>Sex</label>
+              <select id="s_sex"><option value="male">Male</option><option value="female">Female</option><option value="na">Prefer not to say</option></select>
+            </div>
+            <div>
+              <label>Age</label>
+              <input id="s_age" type="number" min="10" max="100" placeholder="e.g. 30" oninput="previewSetup()"/>
+            </div>
+          </div>
+          <div class="row2">
+            <div>
+              <label>Height (cm)</label>
+              <input id="s_height" type="number" step="1" placeholder="e.g. 178" oninput="previewSetup()"/>
+            </div>
+            <div>
+              <label>Current weight (kg)</label>
+              <input id="s_weight" type="number" step="0.1" placeholder="e.g. 78.5" oninput="previewSetup()"/>
+            </div>
+          </div>
+          <div class="row2">
+            <div>
+              <label>Goal</label>
+              <select id="s_goalType" onchange="previewSetup()">
+                <option value="lose">Lose fat (deficit)</option>
+                <option value="maintain">Maintain</option>
+                <option value="gain">Gain muscle (surplus)</option>
+              </select>
+            </div>
+            <div>
+              <label>Goal weight (kg)</label>
+              <input id="s_goalWeight" type="number" step="0.1" placeholder="optional" oninput="previewSetup()"/>
+            </div>
+          </div>
+          <div class="row2">
+            <div>
+              <label>Timeframe (weeks)</label>
+              <input id="s_weeks" type="number" min="4" max="52" value="8" oninput="previewSetup()"/>
+            </div>
+            <div>
+              <label>Activity level</label>
+              <select id="s_activity" onchange="previewSetup()">
+                <option value="1.2">Sedentary</option>
+                <option value="1.375">Lightly active</option>
+                <option value="1.55">Moderately active</option>
+                <option value="1.725">Very active</option>
+              </select>
+            </div>
+          </div>
 
-      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
-        <button class="btn primary" onclick="saveSetup()">Save plan</button>
-        <button class="btn" onclick="closeSetup()">Cancel</button>
-        <div class="hint" id="s_msg"></div>
+          <details style="margin-top:6px">
+            <summary class="hint">Advanced (protein & fat minimums)</summary>
+            <div class="row2" style="margin-top:8px">
+              <div>
+                <label>Protein target (g/kg)</label>
+                <input id="s_proteinKg" type="number" step="0.1" value="1.8" oninput="previewSetup()"/>
+              </div>
+              <div>
+                <label>Min dietary fat (g/kg)</label>
+                <input id="s_fatMinKg" type="number" step="0.1" value="0.6" oninput="previewSetup()"/>
+              </div>
+            </div>
+          </details>
+
+          <div style="display:flex; gap:8px; margin-top:14px; flex-wrap:wrap">
+            <button class="btn primary" id="savePlanBtn" onclick="saveSetup()" disabled>Save plan</button>
+            <button class="btn" onclick="closeSetup()">Cancel</button>
+            <div class="hint" id="s_msg"></div>
+          </div>
+        </div>
+
+        <!-- Right: live preview -->
+        <div class="preview">
+          <div class="pv-title">Plan viability</div>
+          <div class="pv-row"><span>Maintenance (TDEE)</span><strong id="pv_tdee">—</strong></div>
+          <div class="pv-row"><span>Daily calorie target</span><strong id="pv_kcal">—</strong></div>
+          <div class="pv-row"><span>Protein / Fat / Carbs</span><strong id="pv_macros">—</strong></div>
+          <div class="pv-row"><span>Weekly pace</span><strong id="pv_pace">—</strong></div>
+          <div style="margin:8px 0 4px" class="bar"><i id="pv_bar"></i></div>
+          <div id="pv_note" class="hint">Fill in age, height and current weight to get a preview.</div>
+          <div id="pv_warn" class="danger" style="display:none; margin-top:6px"></div>
+          <div id="pv_ok" class="ok" style="display:none; margin-top:6px"></div>
+          <div id="pv_suggest" class="hint" style="margin-top:6px"></div>
+        </div>
       </div>
     </div>
   </div>
 
   <footer class="wrap">MVP for learning. Not medical advice.</footer>
+
+  <script> class="wrap">MVP for learning. Not medical advice.</footer>
 
   <script>
     const $ = (id)=>document.getElementById(id);
@@ -351,22 +345,23 @@
       const weeks = Math.max(4, Math.min(52, p.weeks||8));
       let dailyKcal = TDEE; // default maintain
 
-      const kgDiff = (p.goalWeightKg? p.goalWeightKg - p.weightKg : 0);
-      const weeklyChangeNeeded = kgDiff / weeks; // negative if losing
+      const kgDiff = (p.goalWeightKg? p.goalWeightKg - p.weightKg : 0); // negative if target is lighter
       const kcalPerKg = 7700; // rough estimate
 
       if(p.goalType==='lose'){
-        // safe weekly loss ~0.25% to 1.0% of BW; cap daily deficit at min(1000, 0.25*TDEE)
         const bw = p.weightKg;
-        const safeMaxPerWeek = -Math.max(0.25*bw/100 * 100, 0.25*bw/100 * 100) // placeholder not used further
-        const desiredPerWeek = Math.min(-0.0025*bw, Math.max(weeklyChangeNeeded, -0.01*bw)); // clamp
-        let dailyDeficit = Math.abs(desiredPerWeek) * kcalPerKg / 7;
+        // safe weekly loss band: 0.25%–1.0% BW per week
+        const minLoss = 0.0025*bw; // kg/week
+        const maxLoss = 0.01*bw;   // kg/week
+        const neededPerWeek = Math.abs(kgDiff)/weeks || minLoss; // positive number
+        const chosenPerWeek = Math.min(Math.max(neededPerWeek, minLoss), maxLoss);
+        let dailyDeficit = (chosenPerWeek * kcalPerKg) / 7;
         const cap = Math.min(1000, 0.25*TDEE);
         dailyDeficit = Math.min(dailyDeficit, cap);
         dailyKcal = Math.max(1200, Math.round(TDEE - dailyDeficit));
       }
       if(p.goalType==='gain'){
-        // modest surplus 200‑400 kcal/day
+        // modest surplus 250‑350 kcal/day
         const surplus = 300;
         dailyKcal = Math.round(TDEE + surplus);
       }
@@ -374,14 +369,119 @@
       // macros
       const proteinG = Math.round(p.proteinPerKg * p.weightKg);
       const fatMinG = Math.round(p.fatMinPerKg * p.weightKg);
-      const kcalAfterP = dailyKcal - proteinG*4;
       const fatG = Math.max(fatMinG, Math.round(0.25*dailyKcal/9));
       const carbsG = Math.max(0, Math.round((dailyKcal - proteinG*4 - fatG*9)/4));
 
       return { TDEE: Math.round(TDEE), dailyKcal, proteinG, fatG, carbsG };
     }
 
+    function previewSetup(){
+      const msg = (t)=>{ $('s_msg').textContent = t||''; };
+      const get = (id)=> $(id).value;
+      const num = (id)=> parseFloat($(id).value||'');
+
+      const age = parseInt(get('s_age')||'0',10);
+      const height = num('s_height');
+      const weight = num('s_weight');
+      const goalType = get('s_goalType');
+      const goalW = num('s_goalWeight')||null;
+      const weeks = Math.max(4, Math.min(52, parseInt(get('s_weeks')||'8',10)));
+      const activity = parseFloat(get('s_activity')||'1.2');
+      const proteinPerKg = parseFloat(get('s_proteinKg')||'1.8');
+      const fatMinPerKg = parseFloat(get('s_fatMinKg')||'0.6');
+
+      const canCalc = age && height && weight;
+      $('savePlanBtn').disabled = !canCalc;
+
+      if(!canCalc){
+        $('pv_tdee').textContent='—';
+        $('pv_kcal').textContent='—';
+        $('pv_macros').textContent='—';
+        $('pv_pace').textContent='—';
+        $('pv_bar').style.width='0%';
+        $('pv_note').style.display='block';
+        $('pv_warn').style.display='none';
+        $('pv_ok').style.display='none';
+        $('pv_suggest').textContent='';
+        return;
+      }
+
+      const p = { sex:get('s_sex'), age, heightCm:height, weightKg:weight, goalType, goalWeightKg:goalW, weeks, activity, proteinPerKg, fatMinPerKg };
+      const t = computeTargets(p);
+
+      $('pv_tdee').textContent = t.TDEE + ' kcal';
+      $('pv_kcal').textContent = t.dailyKcal + ' kcal';
+      $('pv_macros').textContent = `${t.proteinG} P / ${t.fatG} F / ${t.carbsG} C`;
+
+      // Pace + viability
+      let pace = 0; // kg/week (negative = losing)
+      let warn = '';
+      const bw = weight;
+      if(goalW){ pace = (goalW - weight) / weeks; }
+      const minLoss = -0.01*bw;   // -1.0%/wk
+      const softLoss = -0.007*bw; // -0.7%/wk
+      const okLoss = -0.0025*bw;  // -0.25%/wk
+      const minGain = 0.1;        // kg/week (rough, muscle gain is slow)
+      const maxGain = 0.4;
+
+      if(goalType==='lose' && goalW){
+        $('pv_pace').textContent = pace.toFixed(2) + ' kg/wk';
+        const pct = Math.max(0, Math.min(1, Math.abs(pace)/Math.abs(minLoss)));
+        $('pv_bar').style.width = (pct*100).toFixed(0)+'%';
+        if(pace < minLoss){ warn = 'Too aggressive. Aim for 0.25%–1.0% bodyweight loss per week.'; }
+        else if(pace > okLoss){ warn = 'Very slow loss. Consider a slightly larger deficit.'; }
+      } else if(goalType==='gain' && goalW){
+        $('pv_pace').textContent = '+'+pace.toFixed(2) + ' kg/wk';
+        const pct = Math.max(0, Math.min(1, (pace - minGain) / (maxGain - minGain)));
+        $('pv_bar').style.width = (pct*100).toFixed(0)+'%';
+        if(pace > maxGain){ warn = 'Surplus may be too high; risk of excess fat gain.'; }
+        else if(pace < minGain){ warn = 'Gain pace is very slow; ensure sufficient surplus and protein.'; }
+      } else {
+        $('pv_pace').textContent = '—'; $('pv_bar').style.width='0%';
+      }
+
+      // Suggest timeframe if needed
+      let suggest='';
+      if(goalW && goalType!=='maintain'){
+        const delta = Math.abs(goalW - weight);
+        if(goalType==='lose'){
+          const weeksFast = Math.ceil(delta / Math.abs(minLoss));
+          const weeksSoft = Math.ceil(delta / Math.abs(softLoss));
+          suggest = `Suggested timeframe: ${weeksSoft}–${weeksFast} weeks for a safe rate.`;
+        } else {
+          const weeksMin = Math.ceil(delta / minGain);
+          const weeksMax = Math.ceil(delta / maxGain);
+          suggest = `Suggested timeframe: ${weeksMax}–${weeksMin} weeks depending on surplus.`;
+        }
+      }
+
+      $('pv_note').style.display='none';
+      if(warn){ $('pv_warn').style.display='block'; $('pv_warn').textContent = warn; $('pv_ok').style.display='none'; }
+      else { $('pv_warn').style.display='none'; $('pv_ok').style.display='block'; $('pv_ok').textContent='Looks viable. You can save this plan.'; }
+      $('pv_suggest').textContent = suggest;
+    }
+
     function saveSetup(){
+      const p = {
+        sex: $('s_sex').value,
+        age: parseInt($('s_age').value||'0',10),
+        heightCm: parseFloat($('s_height').value||'0'),
+        weightKg: parseFloat($('s_weight').value||'0'),
+        goalType: $('s_goalType').value,
+        goalWeightKg: parseFloat($('s_goalWeight').value||'') || null,
+        weeks: parseInt($('s_weeks').value||'8',10),
+        activity: parseFloat($('s_activity').value||'1.2'),
+        proteinPerKg: parseFloat($('s_proteinKg').value||'1.8'),
+        fatMinPerKg: parseFloat($('s_fatMinKg').value||'0.6')
+      };
+
+      if(!p.age || !p.heightCm || !p.weightKg){ $('s_msg').textContent = 'Please fill age, height and current weight.'; return; }
+
+      const t = computeTargets(p);
+      saveProfile(p); saveTargets(t);
+      $('s_msg').textContent = 'Saved. Closing…';
+      setTimeout(()=>{ closeSetup(); }, 400);
+    }(){
       const p = {
         sex: $('s_sex').value,
         age: parseInt($('s_age').value||'0',10),
@@ -546,6 +646,8 @@
       $('date').value = d;
       render();
       if(!loadProfile()) openSetup();
+      // ensure preview reacts immediately if modal opens
+      window.addEventListener('load', ()=> setTimeout(previewSetup, 100));
     })();
   </script>
 </body>
