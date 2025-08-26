@@ -147,7 +147,8 @@
           <button class="btn" onclick="seedDemo()">Load demo data</button>
           <button class="btn ghost" onclick="clearAll()">Clear all</button>
           <button class="btn" onclick="openSetup()">Re‑run setup</button>
-          <button class="btn" onclick="getAIInsights()">AI Insights</button>
+          <button class=\"btn\" onclick=\"getAIInsights()\">AI Insights</button>
+          <button class=\"btn\" onclick=\"openCalc()\">Timeframe calc</button>
         </div>
 
         <div style="margin-top:18px">
@@ -312,6 +313,60 @@
           <div id="pv_ok" class="ok" style="display:none; margin-top:6px"></div>
           <div id="pv_suggest" class="hint" style="margin-top:6px"></div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Mini Goal Timeframe Calculator -->
+  <div class="modal" id="calcModal" role="dialog" aria-modal="true">
+    <div class="panel">
+      <h3>Goal Timeframe Calculator</h3>
+      <p class="hint">Quick estimate based on daily energy change. Uses 7,700 kcal ≈ 1 kg weight change and a simple TDEE ≈ 22 × weight × activity.</p>
+      <div class="row3">
+        <div>
+          <label>Current weight (kg)</label>
+          <input id="c_weight" type="number" step="0.1" placeholder="e.g. 78.5" oninput="recalcCalc()" />
+        </div>
+        <div>
+          <label>Target weight (kg)</label>
+          <input id="c_target" type="number" step="0.1" placeholder="e.g. 74" oninput="recalcCalc()" />
+        </div>
+        <div>
+          <label>Activity level</label>
+          <select id="c_activity" onchange="recalcCalc()">
+            <option value="1.2">Sedentary</option>
+            <option value="1.375">Lightly active</option>
+            <option value="1.55">Moderately active</option>
+            <option value="1.725">Very active</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row2" style="margin-top:8px">
+        <div>
+          <label>Daily deficit / surplus (kcal)</label>
+          <input id="c_deficit" type="number" step="50" value="300" oninput="recalcCalc()"/>
+          <div class="hint">Negative = deficit (weight loss), positive = surplus (weight gain). Try −300/−500/−700.</div>
+        </div>
+        <div>
+          <label>Cap (safety)</label>
+          <input id="c_cap" type="text" readonly />
+          <div class="hint">Limit: min(1000 kcal/day, 25% of estimated TDEE)</div>
+        </div>
+      </div>
+
+      <div class="preview" style="margin-top:10px">
+        <div class="pv-row"><span>Estimated TDEE</span><strong id="c_tdee">—</strong></div>
+        <div class="pv-row"><span>Weight to change</span><strong id="c_deltaKg">—</strong></div>
+        <div class="pv-row"><span>Pace</span><strong id="c_pace">—</strong></div>
+        <div class="pv-row"><span>Estimated timeframe</span><strong id="c_weeks">—</strong></div>
+        <div class="pv-row"><span>Target date</span><strong id="c_date">—</strong></div>
+        <div id="c_warn" class="danger" style="display:none; margin-top:6px"></div>
+        <div id="c_ok" class="ok" style="display:none; margin-top:6px"></div>
+      </div>
+
+      <div style="display:flex; gap:8px; margin-top:12px; flex-wrap:wrap">
+        <button class="btn" onclick="closeCalc()">Close</button>
       </div>
     </div>
   </div>
@@ -628,6 +683,60 @@
       if(!loadProfile()) openSetup();
       window.addEventListener('load', ()=> setTimeout(previewSetup, 100));
     })();
+  function openCalc(){ $('calcModal').classList.add('active'); recalcCalc(); }
+    function closeCalc(){ $('calcModal').classList.remove('active'); }
+
+    function recalcCalc(){
+      const w = parseFloat(($('c_weight').value||'').trim());
+      const t = parseFloat(($('c_target').value||'').trim());
+      const act = parseFloat($('c_activity').value||'1.2');
+      let d = parseFloat(($('c_deficit').value||'0').trim());
+
+      const kcalPerKg = 7700;
+      const can = !isNaN(w) && !isNaN(t) && w>0 && t>0;
+
+      if(!can){
+        ['c_tdee','c_deltaKg','c_pace','c_weeks','c_date'].forEach(id=>$(id).textContent='—');
+        $('c_warn').style.display='none'; $('c_ok').style.display='none';
+        $('c_cap').value = '';
+        return;
+      }
+
+      // Simple TDEE estimate without height/age: RMR ≈ 22*kgs, TDEE = RMR*activity
+      const TDEE = Math.round(22 * w * act);
+      const cap = Math.min(1000, Math.round(0.25*TDEE));
+      $('c_cap').value = cap + ' kcal/day max';
+
+      // enforce cap
+      if(Math.abs(d) > cap){ d = Math.sign(d) * cap; $('c_deficit').value = d; }
+
+      const deltaKg = +(t - w).toFixed(1);
+      const perDay = Math.abs(d);
+      const weeks = perDay>0 ? Math.ceil(Math.abs(deltaKg) * kcalPerKg / (perDay*7)) : 0;
+      
+      // weekly pace kg/wk
+      const pace = perDay>0 ? (perDay*7 / kcalPerKg) : 0; // positive pace in kg/wk (abs)
+
+      $('c_tdee').textContent = TDEE + ' kcal/day';
+      $('c_deltaKg').textContent = (deltaKg>0? '+':'') + deltaKg + ' kg';
+      $('c_pace').textContent = (d<0? '-':'+' ) + pace.toFixed(2) + ' kg/wk';
+      $('c_weeks').textContent = weeks? weeks + ' weeks' : '—';
+
+      if(weeks){
+        const date = new Date(); date.setDate(date.getDate()+weeks*7);
+        $('c_date').textContent = date.toISOString().slice(0,10);
+      } else {
+        $('c_date').textContent = '—';
+      }
+
+      // Safety messaging relative to BW
+      const pctBW = (pace / w) * 100; // weekly percent change
+      let warn='';
+      if(d<0 && pctBW>1.0){ warn='Loss pace is aggressive (>1% BW/week). Consider a smaller deficit.'; }
+      if(d>0 && pace>0.4){ warn='Gain pace is aggressive (>0.4 kg/week). Consider a smaller surplus.'; }
+      if(warn){ $('c_warn').style.display='block'; $('c_warn').textContent=warn; $('c_ok').style.display='none'; }
+      else{ $('c_warn').style.display='none'; $('c_ok').style.display='block'; $('c_ok').textContent='Looks viable based on current inputs.'; }
+    }
   </script>
 </body>
 </html>
