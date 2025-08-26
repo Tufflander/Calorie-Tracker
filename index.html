@@ -9,6 +9,53 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <style>
+    /* === Glass White Theme === */
+.theme-glass {
+  --bg: #f7f8fb;
+  --card: rgba(255,255,255,0.65);
+  --text: #0b1220;
+  --muted: #6b7280;
+  --acc: #0ea5e9;
+}
+.theme-glass body { background: radial-gradient(1200px 800px at 20% -10%, #ffffff 0%, #eef2f7 50%, #e9eef6 100%); }
+.theme-glass header { 
+  background: linear-gradient(180deg, rgba(255,255,255,.85), rgba(255,255,255,.65));
+  border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+  backdrop-filter: saturate(140%) blur(10px);
+}
+.theme-glass .card, 
+.theme-glass .kpi {
+  background: var(--card);
+  border: 1px solid rgba(15,23,42,0.08);
+  border-radius: 24px;
+  box-shadow: 0 10px 30px rgba(15,23,42,0.06), inset 0 1px 0 rgba(255,255,255,0.6);
+  backdrop-filter: blur(12px);
+}
+.theme-glass input, 
+.theme-glass select {
+  background: rgba(255,255,255,0.9);
+  border: 1px solid rgba(15,23,42,0.12);
+  border-radius: 16px;
+}
+.theme-glass .btn {
+  border-radius: 16px;
+  border: 1px solid rgba(15,23,42,0.12);
+  background: rgba(255,255,255,0.8);
+}
+.theme-glass .btn.primary {
+  background: linear-gradient(135deg, #60a5fa, #22d3ee);
+  border-color: transparent;
+  box-shadow: 0 8px 18px rgba(59,130,246,0.25);
+}
+.theme-glass table tbody tr {
+  background: rgba(255,255,255,0.7);
+  border: 1px solid rgba(15,23,42,0.08);
+}
+.theme-glass .pill.ok  { background: rgba(16,185,129,0.15); color:#059669; }
+.theme-glass .pill.warn{ background: rgba(245,158,11,0.15); color:#b45309; }
+.theme-glass .pill.bad { background: rgba(239,68,68,0.15); color:#b91c1c; }
+/* Chart tick colour adjustments on light background */
+.theme-glass canvas { background: transparent; }
     :root{
       --bg: #0b1020; --card:#111733; --muted:#7f8ab3; --text:#eaf0ff; --acc:#7ac6ff; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444;
     }
@@ -54,9 +101,14 @@
     .panel h3{margin:0 0 10px; font-size:18px}
     .hint{font-size:12px; color:var(--muted)}
     .danger{color:#f87171; font-size:12px}
+    /* Subtle hover lift for cards and buttons */
+.theme-glass .card:hover { transform: translateY(-2px); transition: transform 180ms ease; }
+.theme-glass .btn:hover  { transform: translateY(-1px); transition: transform 150ms ease; }
+
   </style>
 </head>
 <body>
+  <body class="theme-glass">
   <header>
     <div class="wrap">
       <h1>Calorie & Macro Tracker — MVP</h1>
