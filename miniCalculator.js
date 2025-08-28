@@ -1,10 +1,4 @@
-/**
- * miniCalculator.js — floating modal calculator with live chart and what-if slider
- */
-import { modal } from './ui.js';
-import { mountMiniCalcChart } from './charts.js';
-export function openMiniCalc(){
-  const el = modal(`
+import { modal } from './ui.js';export function openMiniCalc(applyCb){const el=modal(`
     <h2>Goal timeframe</h2>
     <div class="row3">
       <div><label>Current weight (kg)</label><input id="mc-cur" type="number" step="0.1"></div>
@@ -21,30 +15,12 @@ export function openMiniCalc(){
       </div>
     </div>
     <div class="row" style="margin-top:8px">
-      <div><label>Daily deficit (kcal)</label><input id="mc-def" type="number" step="50" value="300"></div>
-      <div><label>What if</label><input id="mc-range" type="range" min="100" max="900" step="50" value="300"></div>
+      <div><label>Daily deficit (kcal)</label><input id="mc-def" type="number" step="50" value="300" min="0" max="750"></div>
+      <div><label>What if</label><input id="mc-range" type="range" min="0" max="750" step="50" value="300"></div>
     </div>
-    <div class="card glass" style="margin-top:8px">
-      <canvas id="mc-chart" height="130"></canvas>
-      <div id="mc-out" style="margin-top:6px"></div>
-    </div>
-  `, { id:'miniCalcModal' });
-  const $ = (sel)=> el.querySelector(sel);
-  const cur = $('#mc-cur'), tgt = $('#mc-tgt'), tier = $('#mc-tier'), def = $('#mc-def'), rng = $('#mc-range');
-  [cur,tgt,tier,def,rng].forEach(i=> i.addEventListener('input', calc));
-  function calc(){
-    const w = Number(cur.value||0), g=Number(tgt.value||0);
-    let d = Number(def.value||0); const tierD = Number(tier.value||0); if(!d) d = tierD;
-    const daily = Math.max(100, Math.min(1000, d)); // cap for tool
-    const weekly = daily*7; const perWeekKg = +(weekly / 7700).toFixed(2);
-    const needKg = Math.abs(g-w); const weeks = perWeekKg? Math.ceil(needKg / perWeekKg) : 0;
-    const min = Math.round(weeks*0.85), max = Math.round(weeks*1.15);
-    $('#mc-out').innerHTML = `<div>Weekly deficit: <strong>${weekly}</strong> kcal</div>
-      <div>Expected change: <strong>${perWeekKg} kg/week</strong></div>
-      <div>Estimated timeframe: <strong>${min} to ${max} weeks</strong></div>`;
-    const labels = Array.from({length: Math.max(2, weeks||8)}, (_,i)=> `W${i+1}`);
-    let series = []; let x=w; for(let i=0;i<labels.length;i++){ x += (g<w ? -perWeekKg : perWeekKg); series.push(+x.toFixed(1)); }
-    const ctx = $('#mc-chart').getContext('2d'); mountMiniCalcChart(ctx, labels, series);
-  }
-  calc();
-}
+    <div id="mc-out" style="margin-top:6px"></div>
+    <div style="display:flex; gap:8px; margin-top:8px">
+      <button id="apply" class="btn primary">Send to targets</button>
+    </div>`,{id:'miniCalcModal'});const $=s=>el.querySelector(s);const cur=$('#mc-cur'),tgt=$('#mc-tgt'),tier=$('#mc-tier'),def=$('#mc-def'),rng=$('#mc-range'),out=$('#mc-out');[cur,tgt,tier,def,rng].forEach(i=>i.addEventListener('input',calc));rng.addEventListener('input',()=>def.value=rng.value);def.addEventListener('input',()=>rng.value=def.value);function calc(){const w=Number(cur.value||0),g=Number(tgt.value||0);let d=Number(def.value||0);const tierD=Number(tier.value||0);if(!d)d=tierD;d=Math.max(0,Math.min(750,d));const weekly=d*7;const change=weekly/7700;const need=Math.abs(g-w);const weeks=change?Math.ceil(need/change):0;const min=Math.round(weeks*0.85),max=Math.round(weeks*1.15);out.innerHTML=`<div>Weekly deficit: <strong>${'${'}weekly${'}'}</strong> kcal</div>
+      <div>Expected change: <strong>${'${'}change.toFixed(2)${'}'} kg/week</strong></div>
+      <div>Estimated timeframe: <strong>${'${'}min||0${'}'} to ${'${'}max||0${'}'} weeks</strong></div>`;return{weekly,change,weeks}}const last=calc();$('#apply').onclick=()=>{const {change}=calc();applyCb?.(change)}}

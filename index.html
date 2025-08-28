@@ -3,23 +3,14 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Cal Coach (AU) — Glass</title>
-
-  <!-- PWA -->
+  <title>Cal Coach (AU) — v0.2.1</title>
   <link rel="manifest" href="manifest.webmanifest">
   <meta name="theme-color" content="#f8fafc">
-
-  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <!-- Chart.js (CDN) -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js" defer></script>
-
-  <!-- QuaggaJS (barcode, loaded lazily by logging) -->
   <script id="quagga-cdn" data-src="https://cdn.jsdelivr.net/npm/@ericblade/quagga2@0.0.17/dist/quagga.js" type="application/json"></script>
-
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body class="theme-auto">
@@ -42,7 +33,6 @@
 
   <main id="app" class="app-shell" tabindex="-1" aria-live="polite"></main>
 
-  <!-- Bottom tab bar -->
   <nav id="tabbar" class="tabbar glass" role="navigation" aria-label="Primary">
     <a href="#/today" class="tab" data-route="today" aria-current="page">Today</a>
     <a href="#/log" class="tab" data-route="log">Log</a>
@@ -52,13 +42,9 @@
     <a href="#/more" class="tab" data-route="more">More</a>
   </nav>
 
-  <!-- Floating mini-calculator FAB -->
-  <button id="fabCalc" class="fab" aria-haspopup="dialog" aria-controls="miniCalcModal" aria-label="Open mini calculator">➕</button>
-
-  <!-- Global toasts & modals -->
+  <button id="fabMain" class="fab" aria-haspopup="dialog" aria-label="Quick actions">＋</button>
   <div id="toast" role="status" aria-live="polite"></div>
 
-  <!-- Scripts -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

@@ -1,16 +1,1 @@
-/**
- * router.js — tiny hash router for main views
- */
-const routes = new Map();
-export function route(path, render){ routes.set(path, render); }
-export function initRouter(){
-  const go = ()=>{
-    const path = location.hash.slice(1) || '/today';
-    const render = routes.get(path) || routes.get('/today');
-    document.querySelectorAll('.tab').forEach(a=>{
-      a.setAttribute('aria-current', a.getAttribute('data-route')===path.slice(1) ? 'page' : 'false');
-    });
-    render?.();
-  };
-  window.addEventListener('hashchange', go); go();
-}
+const routes=new Map();export function route(path,render){routes.set(path,render)}export function initRouter(){const go=()=>{const hash=location.hash.slice(1)||'/today';const [path,queryStr]=hash.split('?');const render=routes.get(path)||routes.get('/today');const params=new URLSearchParams(queryStr||'');document.querySelectorAll('.tab').forEach(a=>{a.setAttribute('aria-current',a.getAttribute('data-route')===path.slice(1)?'page':'false')});render?.(params)};window.addEventListener('hashchange',go);go()}export function nav(path,params){const q=params?`?${new URLSearchParams(params).toString()}`:'';location.hash=path+q}

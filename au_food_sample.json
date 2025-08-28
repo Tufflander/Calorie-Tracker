@@ -35,7 +35,7 @@
     "verified": true
   },
   {
-    "id": "weatbix_2",
+    "id": "weetbix_2",
     "name": "Weet-Bix (2 biscuits)",
     "brand": "Sanitarium",
     "kcal": 136,
@@ -124,7 +124,7 @@
     "verified": true
   },
   {
-    "id": "coles_chicken_150",
+    "id": "coles_bbq_chicken_150",
     "name": "Coles BBQ Chicken 150 g",
     "brand": "Coles",
     "kcal": 255,
@@ -212,7 +212,7 @@
     "verified": false
   },
   {
-    "id": "thai_green_curry_serve",
+    "id": "thai_green_curry",
     "name": "Thai Green Curry with Rice (serve)",
     "brand": "Thai Takeaway",
     "kcal": 620,
@@ -256,7 +256,7 @@
     "verified": true
   },
   {
-    "id": "maccas_chicken_mcnuggets6",
+    "id": "maccas_mcnuggets6",
     "name": "McDonald\u2019s Chicken McNuggets 6",
     "brand": "McDonald\u2019s AU",
     "kcal": 279,
@@ -278,7 +278,7 @@
     "verified": false
   },
   {
-    "id": "flatwhite_250ml",
+    "id": "flatwhite_250",
     "name": "Flat White 250 ml (full cream)",
     "brand": "Cafe",
     "kcal": 120,
@@ -300,7 +300,7 @@
     "verified": true
   },
   {
-    "id": "protein_powder_30g",
+    "id": "wpi_30",
     "name": "WPI Protein Powder 30 g",
     "brand": "Bulk Nutrients",
     "kcal": 120,
@@ -322,7 +322,7 @@
     "verified": true
   },
   {
-    "id": "woolies_choc_chip_cookie",
+    "id": "woolies_cookie",
     "name": "Woolworths Choc Chip Cookie",
     "brand": "Woolworths",
     "kcal": 210,
