@@ -1,1 +1,182 @@
-/* placeholder; your existing repo already has styles.css */
+
+/* Cal Coach — Glass UI stylesheet (v0.2.1h)
+   Mobile‑first, colour‑blind safe, light/dark themes, reduced motion respected.
+   This file replaces the placeholder that caused the unstyled page. */
+
+/* ---------- CSS Reset (lightweight) ---------- */
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body { margin: 0; font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif; line-height: 1.45; }
+
+/* ---------- Theme tokens ---------- */
+:root{
+  --bg: #0b1220;
+  --bg-2: #0f172a;
+  --text: #e2e8f0;
+  --muted: #94a3b8;
+  --glass: rgba(255,255,255,0.10);
+  --glass-border: rgba(255,255,255,0.14);
+  --card: rgba(255,255,255,0.08);
+  --primary: #60a5fa;
+  --primary-strong:#3b82f6;
+  --ok: #22c55e;
+  --warn: #f59e0b;
+  --danger: #ef4444;
+  --surface: rgba(148,163,184,0.12);
+  --shadow: 0 10px 30px rgba(2, 6, 23, .45);
+}
+
+.theme-light:root, body.theme-light{
+  --bg: #f1f5f9;
+  --bg-2: #e2e8f0;
+  --text: #0f172a;
+  --muted: #475569;
+  --glass: rgba(255,255,255,0.55);
+  --glass-border: rgba(15,23,42,0.10);
+  --card: rgba(255,255,255,0.65);
+  --surface: rgba(2,6,23,0.04);
+  --shadow: 0 10px 28px rgba(2, 6, 23, .12);
+}
+
+.theme-dark:root, body.theme-dark{ /* uses defaults above */ }
+
+/* ---------- Background + layout ---------- */
+body{
+  color: var(--text);
+  background: radial-gradient(1200px 600px at 20% -10%, rgba(96,165,250,0.45), transparent 60%),
+              radial-gradient(900px 500px at 90% 10%, rgba(34,197,94,0.25), transparent 55%),
+              var(--bg);
+}
+
+.app-header{
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 12px; margin: 8px; border-radius: 16px;
+}
+.app-title{ font-size: 20px; margin: 0 0 0 8px; }
+.h-left{ display: flex; align-items: center; gap: 8px; }
+.h-right{ display: flex; align-items: center; gap: 10px; }
+
+.app-shell{ padding: 8px; padding-bottom: 92px; }
+
+.glass{
+  background: var(--glass);
+  backdrop-filter: blur(18px) saturate(140%);
+  -webkit-backdrop-filter: blur(18px) saturate(140%);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow);
+}
+.card{ border-radius: 18px; padding: 14px; margin: 10px 8px; }
+
+/* ---------- Tabbar ---------- */
+.tabbar{
+  position: fixed; bottom: 10px; left: 10px; right: 10px; z-index: 15;
+  display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; padding: 8px;
+  border-radius: 16px;
+}
+.tab{
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 10px 8px; border-radius: 999px; text-decoration: none; color: var(--text);
+  background: var(--surface); border: 1px solid var(--glass-border); font-weight: 600;
+  transition: transform .08s ease;
+}
+.tab[aria-current="page"]{ background: linear-gradient(180deg, rgba(96,165,250,.9), rgba(59,130,246,.9)); color: #081226; }
+.tab:active{ transform: scale(.98); }
+
+/* ---------- Buttons ---------- */
+.btn{
+  appearance: none; border: 1px solid var(--glass-border);
+  background: var(--surface); color: var(--text);
+  padding: 10px 12px; border-radius: 12px; font-weight: 600; cursor: pointer;
+}
+.btn.primary{ background: linear-gradient(180deg, var(--primary), var(--primary-strong)); color: #06101f; border-color: transparent; }
+.icon-btn{ border: 1px solid var(--glass-border); background: var(--surface); border-radius: 10px; padding: 8px 10px; cursor: pointer; }
+
+/* ---------- Switch (toggle) ---------- */
+.switch{ position: relative; display:inline-flex; align-items:center; gap:6px; }
+.switch input{ display:none; }
+.switch .slider{
+  width: 44px; height: 26px; display:inline-block; border-radius: 999px;
+  background: var(--surface); border: 1px solid var(--glass-border); position: relative;
+}
+.switch .slider::after{
+  content: ""; position: absolute; top: 50%; left: 3px; transform: translateY(-50%);
+  width: 20px; height: 20px; border-radius: 999px; background: #fff;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.switch input:checked + .slider::after{ left: 21px; }
+.switch.small .slider{ width: 48px; height: 24px; }
+.switch-label{ margin-left: 6px; color: var(--muted); font-weight: 700; }
+
+/* ---------- Rows, grids ---------- */
+.row{ display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.row3{ display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+.grid{ display: grid; gap: 8px; }
+.grid.two{ grid-template-columns: 1fr 1fr; }
+
+/* ---------- Inputs ---------- */
+input, select{
+  width: 100%; border: 1px solid var(--glass-border); border-radius: 12px;
+  padding: 10px 12px; background: rgba(255,255,255,.06); color: var(--text);
+}
+label{ display:block; font-size: 13px; color: var(--muted); margin-bottom: 6px; }
+
+/* ---------- Macro section ---------- */
+.macro-card{ display:flex; align-items:center; gap: 12px; }
+.macro-ring{ width: 140px; height: 140px; display:grid; place-items:center; }
+.macro-labels{ flex:1; }
+.kj-badge{ color: var(--muted); font-size: 12px; margin-top: 4px; }
+.week-ticker{ margin-top: 6px; color: var(--muted); font-weight: 600; }
+
+/* ---------- Meals list ---------- */
+.meal-list .item{
+  display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: center;
+  padding: 10px; border: 1px dashed var(--glass-border); border-radius: 12px;
+}
+.kcal{ color: var(--muted); }
+
+/* ---------- Progress bar ---------- */
+.progress-bar{ background: rgba(148,163,184,.2); height: 12px; border-radius: 999px; overflow: hidden; }
+.progress-bar > span{ display:block; height: 100%; background: linear-gradient(90deg,#22c55e,#16a34a); }
+
+.badge{ display:inline-block; margin-left: 8px; font-size:12px; background:#16a34a; color:#06101f; padding:2px 8px; border-radius:999px; font-weight:800; }
+.warn{ color: var(--warn); }
+
+/* ---------- Toast ---------- */
+#toast{ position: fixed; left: 0; right: 0; bottom: 84px; z-index: 40; display:grid; place-items:center; pointer-events: none; }
+.toast{
+  pointer-events: all;
+  background: var(--card); border: 1px solid var(--glass-border); border-radius: 12px;
+  padding: 10px 14px; font-weight: 700; box-shadow: var(--shadow);
+}
+
+/* ---------- Modal & sheet ---------- */
+.sheet{
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 60;
+  background: var(--card); border-top-left-radius: 18px; border-top-right-radius: 18px;
+  border: 1px solid var(--glass-border); padding: 12px; box-shadow: var(--shadow);
+}
+
+/* ---------- FAB ---------- */
+.fab{
+  position: fixed; right: 18px; bottom: 90px; z-index: 16;
+  width: 58px; height: 58px; border-radius: 999px; border: 0;
+  background: radial-gradient(circle at 30% 20%, #93c5fd, #60a5fa 65%, #3b82f6);
+  color: #06101f; font-size: 30px; line-height: 0; display:grid; place-items:center;
+  box-shadow: 0 10px 24px rgba(2,6,23,.35);
+}
+
+/* ---------- Utility ---------- */
+.muted{ color: var(--muted); }
+section h2, h3{ margin: 6px 0 10px; }
+a{ color: var(--primary); }
+
+/* ---------- Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce){
+  * { animation: none !important; transition: none !important; }
+}
+
+/* ---------- Larger screens ---------- */
+@media (min-width: 800px){
+  .app-shell{ max-width: 920px; margin: 0 auto; }
+}
