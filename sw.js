@@ -1,5 +1,5 @@
-/* Service Worker v0.2.1 — bump cache key for update */
-const CACHE = 'calcoach-v6';
+/* Service Worker v0.2.1h */
+const CACHE = 'calcoach-v7';
 const ASSETS = [
   './','./index.html','./styles.css','./manifest.webmanifest',
   './data/au_food_sample.json',
